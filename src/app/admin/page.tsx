@@ -20,21 +20,11 @@ type Admin = {
   _id: string;
   username: string;
   password: string;
-  ipAddress: string;
-  userAgent: string;
-  location: string;
-  platform: string;
   createdAt: string;
 };
 
 type AdminData = {
-  results: Admin[];
-  pagination: {
-    total_page: number;
-    page_size: number;
-    current_page: number;
-    total: number;
-  };
+  result: Admin[]; // <-- changed from `results`
 };
 
 const formatDate = (iso: string) =>
@@ -43,27 +33,11 @@ const formatDate = (iso: string) =>
     timeStyle: "short",
   });
 
-const getBrowserInfo = (ua: string) =>
-  ua.includes("Chrome")
-    ? "Chrome"
-    : ua.includes("Firefox")
-    ? "Firefox"
-    : ua.includes("Safari")
-    ? "Safari"
-    : "Unknown";
-
 const Pages = () => {
-  const userInfo = useAuthStore((state) => state.userInfo);
   const { logout } = useAuthStore();
 
   const [adminData, setAdminData] = useState<AdminData>({
-    results: [],
-    pagination: {
-      total_page: 1,
-      page_size: 10,
-      current_page: 1,
-      total: 0,
-    },
+    result: [],
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -88,12 +62,9 @@ const Pages = () => {
   useEffect(() => {
     const fetchAccount = async () => {
       try {
-        const response = await fetch(
-          "https://atbm-13-be.onrender.com/account",
-          {
-            method: "GET",
-          }
-        );
+        const response = await fetch("http://localhost:3001/api/v1/account", {
+          method: "GET",
+        });
         const data = await response.json();
         setAdminData(data);
       } catch (error) {
@@ -104,14 +75,11 @@ const Pages = () => {
     fetchAccount();
   }, []);
 
-  const filteredData = adminData.results.filter((admin) => {
-    const term = searchTerm.toLowerCase();
-    return (
-      admin.username.toLowerCase().includes(term) ||
-      admin.ipAddress.toLowerCase().includes(term) ||
-      admin.location.toLowerCase().includes(term)
-    );
-  });
+  const filteredData =
+    adminData.result?.filter((admin) => {
+      const term = searchTerm.toLowerCase();
+      return admin.username.toLowerCase().includes(term);
+    }) ?? [];
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -128,7 +96,6 @@ const Pages = () => {
         <div className="flex items-center gap-4">
           <Badge variant="secondary" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            {adminData.pagination.total} Total Users
           </Badge>
         </div>
       </div>
@@ -166,9 +133,6 @@ const Pages = () => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-black">
               <span>Administrator Accounts</span>
-              <Badge variant="outline">
-                Showing {filteredData.length} of {adminData.pagination.total}
-              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -178,11 +142,7 @@ const Pages = () => {
                   <TableRow className="text-black">
                     <TableHead className="text-black">Username</TableHead>
                     <TableHead className="text-black">Password</TableHead>
-                    <TableHead className="text-black">IP Address</TableHead>
-                    <TableHead className="text-black">Location</TableHead>
-                    <TableHead className="text-black">Platform</TableHead>
-                    <TableHead className="text-black">Browser</TableHead>
-                    <TableHead className="text-black">Created</TableHead>
+
                     <TableHead className="text-black">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -218,31 +178,7 @@ const Pages = () => {
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="outline"
-                          className="font-mono text-gray-700 text-xs"
-                        >
-                          {admin.ipAddress}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {admin.location.includes("undefined") ? (
-                            <Badge variant="secondary">Unknown</Badge>
-                          ) : (
-                            admin.location
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{admin.platform}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {getBrowserInfo(admin.userAgent)}
-                        </div>
-                      </TableCell>
+
                       <TableCell>
                         <div className="text-sm text-gray-600">
                           {formatDate(admin.createdAt)}
@@ -267,21 +203,6 @@ const Pages = () => {
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <div>
-                Page {adminData.pagination.current_page} of{" "}
-                {adminData.pagination.total_page}
-              </div>
-              <div>
-                {adminData.pagination.total} total records (
-                {adminData.pagination.page_size} per page)
-              </div>
             </div>
           </CardContent>
         </Card>
